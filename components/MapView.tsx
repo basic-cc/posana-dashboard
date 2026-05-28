@@ -86,7 +86,7 @@ export default function MapView({ leads, selectedLeadId, city, onLeadSelect }: P
                 )}
                 <button
                   onClick={() => onLeadSelect(lead)}
-                  className="mt-2 text-xs text-green-600 font-medium hover:underline"
+                  className="mt-2 text-xs text-teal-600 font-medium hover:underline"
                 >
                   View details →
                 </button>

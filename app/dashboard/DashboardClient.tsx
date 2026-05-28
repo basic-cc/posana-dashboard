@@ -191,7 +191,7 @@ export default function DashboardClient({ currentUser }: Props) {
     <div className="h-full flex flex-col">
       {/* Navbar */}
       <nav className="h-12 bg-white border-b border-gray-100 flex items-center px-4 gap-4 shrink-0 z-20">
-        <span className="font-bold text-green-700 text-sm tracking-tight">Posana Sales</span>
+        <span className="font-bold text-teal-700 text-sm tracking-tight">Posana Sales</span>
 
         {/* Status summary pills */}
         <div className="hidden md:flex items-center gap-2 flex-1">
@@ -224,7 +224,7 @@ export default function DashboardClient({ currentUser }: Props) {
               onClick={() => setShowAdmin((v) => !v)}
               className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                 showAdmin
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-teal-600 text-white'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
               }`}
             >
@@ -282,7 +282,7 @@ export default function DashboardClient({ currentUser }: Props) {
           {/* Add lead FAB */}
           <button
             onClick={() => setShowAddModal(true)}
-            className="absolute bottom-6 right-6 z-20 bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2.5 rounded-full shadow-lg text-sm transition-colors"
+            className="absolute bottom-6 right-6 z-20 bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2.5 rounded-full shadow-lg text-sm transition-colors"
             style={{ zIndex: selectedLead ? 5 : 20 }}
           >
             + Add Lead
@@ -368,7 +368,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
       <div className="p-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Add Team Member</p>
         {msg && (
-          <p className={`text-xs mb-3 p-2 rounded ${msg.startsWith('Error') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
+          <p className={`text-xs mb-3 p-2 rounded ${msg.startsWith('Error') ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700'}`}>
             {msg}
           </p>
         )}
@@ -378,7 +378,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
             placeholder="Full name"
             value={inviteName}
             onChange={(e) => setInviteName(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <input
             required
@@ -386,7 +386,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
             placeholder="Email address"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <input
             required
@@ -395,12 +395,12 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
             value={invitePassword}
             onChange={(e) => setInvitePassword(e.target.value)}
             minLength={6}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <button
             type="submit"
             disabled={inviting}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors"
+            className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors"
           >
             {inviting ? 'Adding...' : 'Add member'}
           </button>

@@ -113,7 +113,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 required
                 value={form.store_name}
                 onChange={(e) => set({ store_name: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 placeholder="e.g. Blue Bottle Coffee"
               />
             </div>
@@ -123,7 +123,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <select
                 value={form.city}
                 onChange={(e) => set({ city: e.target.value as City })}
-                className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="nyc">NYC</option>
                 <option value="sf">SF</option>
@@ -135,7 +135,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <input
                 value={form.neighborhood}
                 onChange={(e) => set({ neighborhood: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 placeholder="e.g. Tribeca"
               />
             </div>
@@ -146,7 +146,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 <input
                   value={form.address}
                   onChange={(e) => { set({ address: e.target.value }); setGeocoded(null); }}
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder="123 Main St, New York, NY"
                 />
                 <button
@@ -159,7 +159,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 </button>
               </div>
               {geocoded && (
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-teal-600 mt-1">
                   Located: {geocoded[0].toFixed(4)}, {geocoded[1].toFixed(4)}
                 </p>
               )}
@@ -170,7 +170,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <select
                 value={form.store_type}
                 onChange={(e) => set({ store_type: e.target.value as StoreType | '' })}
-                className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">Select type</option>
                 {ALL_STORE_TYPES.map((t) => (
@@ -184,7 +184,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <select
                 value={form.chain_type}
                 onChange={(e) => set({ chain_type: e.target.value as ChainType | '' })}
-                className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">Select</option>
                 <option value="local">Local / Independent</option>
@@ -197,7 +197,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <select
                 value={form.status}
                 onChange={(e) => set({ status: e.target.value as Status })}
-                className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {ALL_STATUSES.map((s) => (
                   <option key={s} value={s}>{STATUS_LABELS[s]}</option>
@@ -210,7 +210,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <select
                 value={form.sales_associate_id}
                 onChange={(e) => set({ sales_associate_id: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -223,7 +223,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <input
                 value={form.contact_name}
                 onChange={(e) => set({ contact_name: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -232,7 +232,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
               <input
                 value={form.contact_phone}
                 onChange={(e) => set({ contact_phone: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -242,7 +242,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 type="email"
                 value={form.contact_email}
                 onChange={(e) => set({ contact_email: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -252,7 +252,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 type="date"
                 value={form.last_contacted_date}
                 onChange={(e) => set({ last_contacted_date: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -262,7 +262,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 value={form.notes}
                 onChange={(e) => set({ notes: e.target.value })}
                 rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
               />
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
             form=""
             onClick={handleSubmit as unknown as React.MouseEventHandler}
             disabled={saving || !form.store_name}
-            className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg text-sm transition-colors"
+            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg text-sm transition-colors"
           >
             {saving ? 'Adding...' : 'Add Lead'}
           </button>

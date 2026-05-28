@@ -85,7 +85,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
             <input
               value={(form.store_name ?? lead.store_name) as string}
               onChange={(e) => setForm((p) => ({ ...p, store_name: e.target.value }))}
-              className="w-full font-semibold text-gray-900 border-b border-green-500 focus:outline-none text-sm"
+              className="w-full font-semibold text-gray-900 bg-transparent border-b border-teal-500 focus:outline-none text-sm"
             />
           ) : (
             <h2 className="font-semibold text-gray-900 text-sm leading-snug truncate">
@@ -110,7 +110,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
             <select
               value={(form.status ?? lead.status) as string}
               onChange={(e) => setForm((p) => ({ ...p, status: e.target.value as Status }))}
-              className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               {ALL_STATUSES.map((s) => (
                 <option key={s} value={s}>{STATUS_LABELS[s]}</option>
@@ -135,7 +135,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
             <select
               value={(form.sales_associate_id ?? lead.sales_associate_id ?? '') as string}
               onChange={(e) => setForm((p) => ({ ...p, sales_associate_id: e.target.value || null }))}
-              className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               <option value="">Unassigned</option>
               {profiles.map((p) => (
@@ -155,7 +155,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               <select
                 value={(form.store_type ?? lead.store_type ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, store_type: (e.target.value || null) as StoreType | null }))}
-                className="mt-1 w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">—</option>
                 {ALL_STORE_TYPES.map((t) => (
@@ -172,7 +172,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               <select
                 value={(form.chain_type ?? lead.chain_type ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, chain_type: (e.target.value || null) as ChainType | null }))}
-                className="mt-1 w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">—</option>
                 <option value="local">Local</option>
@@ -193,7 +193,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
             <select
               value={(form.city ?? lead.city) as string}
               onChange={(e) => setForm((p) => ({ ...p, city: e.target.value as City }))}
-              className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               <option value="nyc">NYC</option>
               <option value="sf">SF</option>
@@ -218,19 +218,19 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
                 placeholder="Name"
                 value={(form.contact_name ?? lead.contact_name ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, contact_name: e.target.value || null }))}
-                className="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded px-2 py-1 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <input
                 placeholder="Phone"
                 value={(form.contact_phone ?? lead.contact_phone ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, contact_phone: e.target.value || null }))}
-                className="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded px-2 py-1 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <input
                 placeholder="Email"
                 value={(form.contact_email ?? lead.contact_email ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, contact_email: e.target.value || null }))}
-                className="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded px-2 py-1 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           ) : (
@@ -238,7 +238,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               {lead.contact_name && <p className="text-gray-700">{lead.contact_name}</p>}
               {lead.contact_phone && <p className="text-gray-500 text-xs">{lead.contact_phone}</p>}
               {lead.contact_email && (
-                <a href={`mailto:${lead.contact_email}`} className="text-green-600 text-xs hover:underline">
+                <a href={`mailto:${lead.contact_email}`} className="text-teal-600 text-xs hover:underline">
                   {lead.contact_email}
                 </a>
               )}
@@ -257,7 +257,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               type="date"
               value={(form.last_contacted_date ?? lead.last_contacted_date ?? '') as string}
               onChange={(e) => setForm((p) => ({ ...p, last_contacted_date: e.target.value || null }))}
-              className="mt-1 w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           ) : (
             <p className="mt-1 text-gray-700">
@@ -276,7 +276,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               value={(form.notes ?? lead.notes ?? '') as string}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value || null }))}
               rows={4}
-              className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
             />
           ) : (
             <p className="mt-1 text-gray-700 text-xs leading-relaxed whitespace-pre-wrap">
@@ -293,7 +293,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
             <button
               onClick={save}
               disabled={saving}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors"
+              className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>

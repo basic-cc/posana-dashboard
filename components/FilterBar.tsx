@@ -41,12 +41,12 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
     (filters.search ? 1 : 0);
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col overflow-y-auto shrink-0">
-      <div className="p-4 border-b border-gray-100">
+    <aside className="w-64 bg-[#F0FDFB] border-r border-teal-100 flex flex-col overflow-y-auto shrink-0">
+      <div className="p-4 border-b border-teal-100">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Filters</span>
+          <span className="text-xs font-semibold text-teal-700 uppercase tracking-wider">Filters</span>
           {activeCount > 0 && (
-            <button onClick={clearAll} className="text-xs text-green-600 hover:underline">
+            <button onClick={clearAll} className="text-xs text-teal-600 hover:underline">
               Clear all
             </button>
           )}
@@ -55,19 +55,19 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
       </div>
 
       {/* Search */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-teal-100">
         <input
           type="text"
           value={filters.search}
           onChange={(e) => set({ search: e.target.value })}
           placeholder="Search stores..."
-          className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full border border-teal-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
       </div>
 
       {/* City */}
-      <div className="p-4 border-b border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">City</p>
+      <div className="p-4 border-b border-teal-100">
+        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wider mb-2">City</p>
         <div className="flex gap-1">
           {(['all', 'nyc', 'sf'] as const).map((c) => (
             <button
@@ -75,8 +75,8 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
               onClick={() => set({ city: c })}
               className={`flex-1 py-1 rounded-md text-xs font-medium transition-colors ${
                 filters.city === c
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-teal-50 border border-teal-100'
               }`}
             >
               {c === 'all' ? 'All' : c.toUpperCase()}
@@ -86,12 +86,12 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
       </div>
 
       {/* Associate */}
-      <div className="p-4 border-b border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Associate</p>
+      <div className="p-4 border-b border-teal-100">
+        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wider mb-2">Associate</p>
         <select
           value={filters.associateId}
           onChange={(e) => set({ associateId: e.target.value })}
-          className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full border border-teal-200 rounded-lg px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
           <option value="">All associates</option>
           {profiles.map((p) => (
@@ -103,8 +103,8 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
       </div>
 
       {/* Status */}
-      <div className="p-4 border-b border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</p>
+      <div className="p-4 border-b border-teal-100">
+        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wider mb-2">Status</p>
         <div className="space-y-1.5">
           {ALL_STATUSES.map((s) => (
             <label key={s} className="flex items-center gap-2 cursor-pointer">
@@ -126,7 +126,7 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
 
       {/* Store Type */}
       <div className="p-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Store Type</p>
+        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wider mb-2">Store Type</p>
         <div className="space-y-1.5">
           {ALL_STORE_TYPES.map((t) => (
             <label key={t} className="flex items-center gap-2 cursor-pointer">
@@ -143,8 +143,8 @@ export default function FilterBar({ filters, profiles, filteredCount, onChange }
       </div>
 
       {/* Legend */}
-      <div className="mt-auto p-4 border-t border-gray-100 bg-gray-50">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Legend</p>
+      <div className="mt-auto p-4 border-t border-teal-100 bg-teal-50/50">
+        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wider mb-2">Legend</p>
         <div className="space-y-1">
           {ALL_STATUSES.map((s) => (
             <div key={s} className="flex items-center gap-2">
