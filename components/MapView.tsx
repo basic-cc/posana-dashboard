@@ -7,14 +7,15 @@ import L from 'leaflet';
 import { Lead, STATUS_COLORS, STATUS_LABELS, STORE_TYPE_LABELS } from './types';
 
 function createColorIcon(color: string, selected: boolean) {
-  const size = selected ? 18 : 13;
-  const border = selected ? '3px solid white' : '2px solid white';
+  const size = selected ? 22 : 16;
+  // White halo via box-shadow ensures visibility against any map tile color.
+  // Selected adds a colored outer ring to distinguish it clearly.
   const shadow = selected
-    ? '0 0 0 2px ' + color + ', 0 2px 6px rgba(0,0,0,0.4)'
-    : '0 1px 4px rgba(0,0,0,0.3)';
+    ? `0 0 0 3px white, 0 0 0 5px ${color}, 0 3px 10px rgba(0,0,0,0.5)`
+    : `0 0 0 2.5px white, 0 2px 8px rgba(0,0,0,0.4)`;
   return L.divIcon({
     className: '',
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:${border};box-shadow:${shadow};"></div>`,
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};box-shadow:${shadow};"></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
