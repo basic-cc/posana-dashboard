@@ -1,15 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import { Lead, STATUS_COLORS, STATUS_LABELS, STORE_TYPE_LABELS } from './types';
 
-function createColorIcon(color: string, selected: boolean) {
-  const size = selected ? 22 : 16;
-  // White halo via box-shadow ensures visibility against any map tile color.
-  // Selected adds a colored outer ring to distinguish it clearly.
+function getBaseSize(zoom: number): number {
+  if (zoom <= 10) return 24;
+  if (zoom <= 12) return 19;
+  if (zoom <= 14) return 15;
+  return 12;
+}
+
+function createColorIcon(color: string, selected: boolean, zoom: number) {
+  const base = getBaseSize(zoom);
+  const size = selected ? base + 7 : base;
   const shadow = selected
     ? `0 0 0 3px white, 0 0 0 5px ${color}, 0 3px 10px rgba(0,0,0,0.5)`
     : `0 0 0 2.5px white, 0 2px 8px rgba(0,0,0,0.4)`;
@@ -35,6 +41,18 @@ function MapController({ city }: { city: string }) {
   return null;
 }
 
+function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const handler = () => onZoomChange(map.getZoom());
+    map.on('zoomend', handler);
+    return () => { map.off('zoomend', handler); };
+  }, [map, onZoomChange]);
+
+  return null;
+}
+
 interface Props {
   leads: Lead[];
   selectedLeadId?: string;
@@ -43,10 +61,10 @@ interface Props {
 }
 
 export default function MapView({ leads, selectedLeadId, city, onLeadSelect }: Props) {
+  const [zoom, setZoom] = useState(12);
   const mappable = leads.filter((l) => l.lat !== null && l.lng !== null);
-  // Key forces MarkerClusterGroup to remount when the filtered set changes,
-  // fixing intermittent cases where cluster doesn't reconcile added/removed markers.
   const clusterKey = mappable.map((l) => l.id).join(',');
+  const handleZoomChange = useCallback((z: number) => setZoom(z), []);
 
   return (
     <MapContainer
@@ -59,12 +77,13 @@ export default function MapView({ leads, selectedLeadId, city, onLeadSelect }: P
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapController city={city} />
+      <ZoomTracker onZoomChange={handleZoomChange} />
       <MarkerClusterGroup key={clusterKey} chunkedLoading>
         {mappable.map((lead) => (
           <Marker
             key={lead.id}
             position={[lead.lat!, lead.lng!]}
-            icon={createColorIcon(STATUS_COLORS[lead.status], lead.id === selectedLeadId)}
+            icon={createColorIcon(STATUS_COLORS[lead.status], lead.id === selectedLeadId, zoom)}
             eventHandlers={{ click: () => onLeadSelect(lead) }}
             zIndexOffset={lead.id === selectedLeadId ? 1000 : 0}
           >
