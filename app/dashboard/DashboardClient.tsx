@@ -183,9 +183,9 @@ export default function DashboardClient({ currentUser }: Props) {
       not_contacted: 0, in_contact: 0,
       samples_shipped: 0, actively_selling: 0, declined: 0,
     };
-    filteredLeads.forEach((l) => counts[l.status]++);
+    leads.forEach((l) => counts[l.status]++);
     return counts;
-  }, [filteredLeads]);
+  }, [leads]);
 
   return (
     <div className="h-full flex flex-col">

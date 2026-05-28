@@ -43,6 +43,9 @@ interface Props {
 
 export default function MapView({ leads, selectedLeadId, city, onLeadSelect }: Props) {
   const mappable = leads.filter((l) => l.lat !== null && l.lng !== null);
+  // Key forces MarkerClusterGroup to remount when the filtered set changes,
+  // fixing intermittent cases where cluster doesn't reconcile added/removed markers.
+  const clusterKey = mappable.map((l) => l.id).join(',');
 
   return (
     <MapContainer
@@ -55,7 +58,7 @@ export default function MapView({ leads, selectedLeadId, city, onLeadSelect }: P
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapController city={city} />
-      <MarkerClusterGroup chunkedLoading>
+      <MarkerClusterGroup key={clusterKey} chunkedLoading>
         {mappable.map((lead) => (
           <Marker
             key={lead.id}
