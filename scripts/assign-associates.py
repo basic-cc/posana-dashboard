@@ -12,10 +12,14 @@ import pandas as pd
 import requests
 import re
 import time
+import os
 from datetime import datetime
+from dotenv import load_dotenv
 
-SUPABASE_URL = "https://mititnoiwyeiwrunotew.supabase.co"
-SERVICE_KEY = "literal:REDACTED"
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env.local'))
+
+SUPABASE_URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
+SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 XLSX_PATH = r"C:\Users\allstarcode\Downloads\Posana Tracking Sheet.xlsx"
 
 # Placeholder emails — real ones can be updated later via Admin panel or Supabase dashboard
@@ -27,7 +31,7 @@ ASSOCIATES = {
     "Ryan":      "ryan@posana.internal",
     "Roy":       "roy@posana.internal",
 }
-TEMP_PASSWORD = "literal:REDACTED"
+TEMP_PASSWORD = os.environ["SUPABASE_TEMP_PASSWORD"]
 
 HEADERS = {
     "apikey": SERVICE_KEY,

@@ -14,11 +14,12 @@ import os
 import json
 import re
 from datetime import datetime
+from dotenv import load_dotenv
 
-SUPABASE_URL = "https://mititnoiwyeiwrunotew.supabase.co"
-# Use your Supabase service role key (not the publishable key) for server-side inserts
-# Get it from: Supabase dashboard → Project Settings → API → service_role
-SUPABASE_SERVICE_KEY = "literal:REDACTED"
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env.local'))
+
+SUPABASE_URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
+SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 
 XLSX_PATH = r"C:\Users\allstarcode\Downloads\Posana Tracking Sheet.xlsx"
 
