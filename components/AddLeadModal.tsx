@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Lead, Profile, Status, StoreType, ChainType, City, STATUS_LABELS, STORE_TYPE_LABELS } from './types';
+import { Lead, Profile, Status, StoreType, ChainType, City, CITY_META, cityLabel, STATUS_LABELS, STORE_TYPE_LABELS } from './types';
+
+const CITIES_BY_STATE = Object.entries(CITY_META).reduce<Record<string, string[]>>((acc, [slug, meta]) => {
+  (acc[meta.state] ??= []).push(slug);
+  return acc;
+}, {});
+const STATE_ORDER = Object.keys(CITIES_BY_STATE).sort((a, b) =>
+  a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)
+);
 
 const ALL_STATUSES: Status[] = ['not_contacted', 'in_contact', 'samples_shipped', 'actively_selling', 'declined'];
 const ALL_STORE_TYPES: StoreType[] = ['coffee_shop', 'gym_fitness', 'smoothie_shop', 'local_deli', 'specialty_grocer', 'other'];
@@ -125,8 +133,13 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
                 onChange={(e) => set({ city: e.target.value as City })}
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="nyc">NYC</option>
-                <option value="sf">SF</option>
+                {STATE_ORDER.map((state) => (
+                  <optgroup key={state} label={state}>
+                    {CITIES_BY_STATE[state].map((slug) => (
+                      <option key={slug} value={slug}>{cityLabel(slug)}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </div>
 

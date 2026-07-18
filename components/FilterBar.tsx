@@ -1,6 +1,6 @@
 'use client';
 
-import { Lead, Profile, Filters, Status, StoreType, City, STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS } from './types';
+import { Lead, Profile, Filters, Status, StoreType, City, CITY_META, cityLabel, STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS } from './types';
 
 const ALL_STATUSES: Status[] = ['not_contacted', 'in_contact', 'samples_shipped', 'actively_selling', 'declined'];
 const ALL_STORE_TYPES: StoreType[] = ['coffee_shop', 'gym_fitness', 'smoothie_shop', 'local_deli', 'specialty_grocer', 'other'];
@@ -19,6 +19,19 @@ export default function FilterBar({ filters, profiles, leads, filteredCount, onC
   const neighborhoods = Array.from(
     new Set(leads.map((l) => l.neighborhood).filter((n): n is string => !!n))
   ).sort((a, b) => a.localeCompare(b));
+
+  const citiesByState = Array.from(new Set(leads.map((l) => l.city).filter(Boolean)))
+    .reduce<Record<string, City[]>>((acc, c) => {
+      const state = CITY_META[c]?.state ?? 'Other';
+      (acc[state] ??= []).push(c);
+      return acc;
+    }, {});
+  const stateOrder = Object.keys(citiesByState).sort((a, b) =>
+    a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)
+  );
+  stateOrder.forEach((state) =>
+    citiesByState[state].sort((a, b) => cityLabel(a).localeCompare(cityLabel(b)))
+  );
 
   const toggleStatus = (s: Status) => {
     const next = filters.statuses.includes(s)
@@ -73,19 +86,36 @@ export default function FilterBar({ filters, profiles, leads, filteredCount, onC
       {/* City */}
       <div className="p-4 border-b border-teal-100 dark:border-gray-700">
         <p className="text-xs font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-2">City</p>
-        <div className="flex gap-1">
-          {(['all', 'nyc', 'sf'] as const).map((c) => (
-            <button
-              key={c}
-              onClick={() => set({ city: c })}
-              className={`flex-1 py-1 rounded-md text-xs font-medium transition-colors ${
-                filters.city === c
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-gray-700 border border-teal-100 dark:border-gray-600'
-              }`}
-            >
-              {c === 'all' ? 'All' : c.toUpperCase()}
-            </button>
+        <button
+          onClick={() => set({ city: 'all' })}
+          className={`w-full mb-2 py-1 rounded-md text-xs font-medium transition-colors ${
+            filters.city === 'all'
+              ? 'bg-teal-600 text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-gray-700 border border-teal-100 dark:border-gray-600'
+          }`}
+        >
+          All
+        </button>
+        <div className="space-y-2">
+          {stateOrder.map((state) => (
+            <div key={state}>
+              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{state}</p>
+              <div className="flex flex-wrap gap-1">
+                {citiesByState[state].map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => set({ city: c })}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                      filters.city === c
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-gray-700 border border-teal-100 dark:border-gray-600'
+                    }`}
+                  >
+                    {cityLabel(c)}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

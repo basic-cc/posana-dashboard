@@ -37,6 +37,10 @@ def normalize_status(raw):
         return "not_contacted"
     s = str(raw).strip().lower()
 
+    # Not contacted — check FIRST so "2 - Not Contacted" etc. aren't misclassified
+    if any(x in s for x in ["not contacted", "yet to contact", "haven't contacted", "haven't"]):
+        return "not_contacted"
+
     # Actively selling
     if any(x in s for x in ["purchase made", "closed", "actively selling"]):
         return "actively_selling"
@@ -76,6 +80,11 @@ TYPE_MAP = {
     "wellness": "gym_fitness",
     "yoga": "gym_fitness",
     "pilates": "gym_fitness",
+    "barre": "gym_fitness",
+    "crossfit": "gym_fitness",
+    "boxing": "gym_fitness",
+    "climbing": "gym_fitness",
+    "spin": "gym_fitness",
 }
 
 def normalize_store_type(raw):
@@ -109,7 +118,11 @@ def parse_date(raw):
     try:
         if isinstance(raw, (datetime, pd.Timestamp)):
             return str(raw.date())
-        return str(pd.to_datetime(raw).date())
+        # Handle multi-line dates (e.g. Ethan's sheet) — take the last date
+        s = str(raw).strip()
+        if "\n" in s:
+            s = s.split("\n")[-1].strip()
+        return str(pd.to_datetime(s).date())
     except:
         return None
 
@@ -122,6 +135,8 @@ def geocode(address):
     if not address or str(address).strip() in ("", "nan"):
         return None, None
     address = str(address).strip()
+    # Normalize multiline addresses
+    address = " ".join(address.split())
     if address in geocode_cache:
         return geocode_cache[address]
 
@@ -148,14 +163,33 @@ def fetch_profiles():
     return {p["name"].lower(): p["id"] for p in r.json()}
 
 
+def extract_associate_name(sheet_name):
+    """
+    'Reagan (Sales)'  → 'Reagan'
+    'Nathaniel (S.A)' → 'Nathaniel'
+    'Sales A. (Gabe)' → 'Gabe'   (prefix is a role label, not a name)
+    """
+    prefix = re.sub(r"\s*\(.*\)\s*$", "", sheet_name).strip()
+    # If the prefix looks like a role label rather than a person's name, use the parenthesized text
+    m = re.search(r"\(([^)]+)\)", sheet_name)
+    inside = m.group(1).strip() if m else ""
+    role_labels = {"sales a.", "sales", "s.a", "sa"}
+    if prefix.lower() in role_labels and inside and inside.lower() not in role_labels | {"s.a", "sales"}:
+        return inside
+    return prefix
+
+
 # ─── Sheet parsing ────────────────────────────────────────────────────────────
 
+def clean(val):
+    s = str(val).strip() if val is not None else ""
+    return None if s.lower() in ("nan", "none", "") else s
+
+
 def parse_sheet(df, associate_name, profiles):
-    """Normalize a sheet's DataFrame into a list of lead dicts."""
     cols = [str(c).strip() for c in df.columns]
     df.columns = cols
 
-    # Map column names (case-insensitive fuzzy)
     def col(patterns):
         for p in patterns:
             for c in cols:
@@ -163,17 +197,25 @@ def parse_sheet(df, associate_name, profiles):
                     return c
         return None
 
-    name_col    = col(["name"])
-    addr_col    = col(["address", "addr"])
-    type_col    = col(["type", "fitness/gym", "fitness"])
-    franchise_col = col(["franchise"])
-    status_col  = col(["status"])
-    contact_col = col(["contact"])
-    notes_col   = col(["notes"])
-    date_col    = col(["last contact", "last_contact"])
+    name_col         = col(["name"])
+    addr_col         = col(["address", "addr"])
+    type_col         = col(["type", "fitness/gym", "fitness"])
+    franchise_col    = col(["franchise"])
+    status_col       = col(["status"])
+    contact_col      = col(["contact"])
+    notes_col        = col(["notes"])
+    date_col         = col(["last contact", "last_contact"])
     neighborhood_col = col(["borough", "neighborhood"])
+    desc_col         = col(["description", "desciption"])  # "desciption" typo in Roy's sheet
+    outcome_col      = col(["outcome"])
 
     associate_id = profiles.get(associate_name.lower())
+    if not associate_id:
+        # Try partial match
+        for pname, pid in profiles.items():
+            if associate_name.lower() in pname or pname in associate_name.lower():
+                associate_id = pid
+                break
 
     leads = []
     for _, row in df.iterrows():
@@ -181,28 +223,40 @@ def parse_sheet(df, associate_name, profiles):
         if not name or name.lower() in ("nan", "none", "name", ""):
             continue
 
-        lead = {
-            "store_name":         name,
-            "address":            str(row.get(addr_col, "") or "").strip() if addr_col else None,
-            "store_type":         normalize_store_type(row.get(type_col) if type_col else None),
-            "chain_type":         normalize_chain_type(row.get(franchise_col) if franchise_col else None),
-            "status":             normalize_status(row.get(status_col) if status_col else None),
-            "sales_associate_id": associate_id,
-            "contact_name":       None,
-            "contact_phone":      None,
-            "contact_email":      None,
-            "neighborhood":       str(row.get(neighborhood_col, "") or "").strip() if neighborhood_col else None,
-            "notes":              str(row.get(notes_col, "") or "").strip() if notes_col else None,
-            "last_contacted_date": parse_date(row.get(date_col) if date_col else None),
-            "city":               "nyc",
-            "lat":                None,
-            "lng":                None,
-        }
+        # Merge notes + description + outcome
+        note_parts = []
+        for src_col in [notes_col, desc_col, outcome_col]:
+            if src_col:
+                v = clean(row.get(src_col))
+                if v:
+                    note_parts.append(v)
+        merged_notes = " | ".join(note_parts) if note_parts else None
 
-        # Blank out "nan" strings
-        for k, v in lead.items():
-            if isinstance(v, str) and v.lower() in ("nan", "none", ""):
-                lead[k] = None
+        # Detect city from address
+        addr_raw = clean(row.get(addr_col) if addr_col else None)
+        city = "nyc"
+        if addr_raw:
+            addr_lower = addr_raw.lower()
+            if any(x in addr_lower for x in ["san francisco", ", sf", ", ca ", "ca 94"]):
+                city = "sf"
+
+        lead = {
+            "store_name":          name,
+            "address":             addr_raw,
+            "store_type":          normalize_store_type(row.get(type_col) if type_col else None),
+            "chain_type":          normalize_chain_type(row.get(franchise_col) if franchise_col else None),
+            "status":              normalize_status(row.get(status_col) if status_col else None),
+            "sales_associate_id":  associate_id,
+            "contact_name":        None,
+            "contact_phone":       None,
+            "contact_email":       None,
+            "neighborhood":        clean(row.get(neighborhood_col) if neighborhood_col else None),
+            "notes":               merged_notes,
+            "last_contacted_date": parse_date(row.get(date_col) if date_col else None),
+            "city":                city,
+            "lat":                 None,
+            "lng":                 None,
+        }
 
         # Parse contact info
         if contact_col:
@@ -234,13 +288,13 @@ def main():
     all_leads = []
     for sheet in target_sheets:
         df = pd.read_excel(xl, sheet_name=sheet)
-        if df.empty:
+        non_empty = df.dropna(how="all")
+        if non_empty.empty:
             print(f"  Skipping empty sheet: {sheet}")
             continue
 
-        # Extract associate name from sheet title, e.g. "Reagan (Sales)" → "Reagan"
-        associate_name = re.sub(r"\s*\(.*\)\s*$", "", sheet).strip()
-        print(f"\nParsing '{sheet}' -> associate: {associate_name}")
+        associate_name = extract_associate_name(sheet)
+        print(f"\nParsing '{sheet}' → associate: {associate_name}")
 
         leads = parse_sheet(df, associate_name, profiles)
         print(f"  {len(leads)} leads parsed")
@@ -270,6 +324,7 @@ def main():
     print("\nInserting into Supabase...")
     batch_size = 50
     inserted = 0
+    errors = 0
     for i in range(0, len(all_leads), batch_size):
         batch = all_leads[i:i + batch_size]
         r = requests.post(
@@ -281,9 +336,10 @@ def main():
             inserted += len(batch)
             print(f"  Inserted batch {i // batch_size + 1} ({len(batch)} leads)")
         else:
+            errors += len(batch)
             print(f"  ERROR on batch {i // batch_size + 1}: {r.status_code} {r.text[:300]}")
 
-    print(f"\nDone! {inserted}/{len(all_leads)} leads inserted.")
+    print(f"\nDone! {inserted}/{len(all_leads)} leads inserted. {errors} errors.")
 
 
 if __name__ == "__main__":

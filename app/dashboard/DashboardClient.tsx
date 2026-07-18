@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import {
   Lead, Profile, Filters, Status, StoreType,
-  STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS,
+  STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS, cityLabel,
 } from '@/components/types';
 import FilterBar from '@/components/FilterBar';
 import LeadPanel from '@/components/LeadPanel';
@@ -140,7 +140,7 @@ export default function DashboardClient({ currentUser }: Props) {
       l.store_name,
       l.address ?? '',
       l.neighborhood ?? '',
-      l.city.toUpperCase(),
+      cityLabel(l.city),
       STATUS_LABELS[l.status],
       l.store_type ? STORE_TYPE_LABELS[l.store_type as StoreType] : '',
       l.chain_type === 'local' ? 'Local' : l.chain_type === 'corporate_chain' ? 'Corporate' : '',

@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.leads (
   chain_group        TEXT,
   notes              TEXT,
   last_contacted_date DATE,
-  city               TEXT DEFAULT 'nyc' CHECK (city IN ('nyc', 'sf')),
+  city               TEXT DEFAULT 'nyc', -- free text city slug; see components/types.ts CITY_META for known slugs
   created_at         TIMESTAMPTZ DEFAULT NOW(),
   updated_at         TIMESTAMPTZ DEFAULT NOW()
 );

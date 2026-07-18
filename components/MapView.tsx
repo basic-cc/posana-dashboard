@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
-import { Lead, STATUS_COLORS, STATUS_LABELS, STORE_TYPE_LABELS } from './types';
+import { Lead, CITY_META, STATUS_COLORS, STATUS_LABELS, STORE_TYPE_LABELS } from './types';
 import { useIsDarkMode } from '@/hooks/useIsDarkMode';
 
 function getBaseSize(zoom: number): number {
@@ -35,8 +35,10 @@ function MapController({ city }: { city: string }) {
   useEffect(() => {
     if (city === prevCity.current) return;
     prevCity.current = city;
-    if (city === 'nyc') map.flyTo([40.7128, -74.006], 12, { duration: 1 });
-    else if (city === 'sf') map.flyTo([37.7749, -122.4194], 12, { duration: 1 });
+    const meta = CITY_META[city];
+    if (meta?.lat !== null && meta?.lng !== null && meta !== undefined) {
+      map.flyTo([meta.lat as number, meta.lng as number], 12, { duration: 1 });
+    }
   }, [city, map]);
 
   return null;
