@@ -11,6 +11,7 @@ import {
 import FilterBar from '@/components/FilterBar';
 import LeadPanel from '@/components/LeadPanel';
 import AddLeadModal from '@/components/AddLeadModal';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import StoreList from '@/components/StoreList';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { FlyToTarget } from '@/components/MapView';
@@ -38,6 +39,7 @@ export default function DashboardClient({ currentUser }: Props) {
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showStoreList, setShowStoreList] = useState(true);
   const [flyToTarget, setFlyToTarget] = useState<FlyToTarget | null>(null);
@@ -273,6 +275,12 @@ export default function DashboardClient({ currentUser }: Props) {
           )}
           <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{currentUser.name}</span>
           <button
+            onClick={() => setShowChangePassword(true)}
+            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
+          >
+            Change Password
+          </button>
+          <button
             onClick={handleLogout}
             className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
           >
@@ -355,6 +363,10 @@ export default function DashboardClient({ currentUser }: Props) {
           onAdd={handleLeadAdded}
           onClose={() => setShowAddModal(false)}
         />
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
       )}
     </div>
   );
