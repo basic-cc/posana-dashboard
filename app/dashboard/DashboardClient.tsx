@@ -11,6 +11,9 @@ import {
 import FilterBar from '@/components/FilterBar';
 import LeadPanel from '@/components/LeadPanel';
 import AddLeadModal from '@/components/AddLeadModal';
+import StoreList from '@/components/StoreList';
+import ThemeToggle from '@/components/ThemeToggle';
+import type { FlyToTarget } from '@/components/MapView';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
@@ -36,11 +39,14 @@ export default function DashboardClient({ currentUser }: Props) {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showStoreList, setShowStoreList] = useState(true);
+  const [flyToTarget, setFlyToTarget] = useState<FlyToTarget | null>(null);
   const [filters, setFilters] = useState<Filters>({
     city: 'all',
     statuses: [],
     storeTypes: [],
     associateId: '',
+    neighborhood: '',
     search: '',
   });
 
@@ -68,6 +74,7 @@ export default function DashboardClient({ currentUser }: Props) {
       if (filters.statuses.length > 0 && !filters.statuses.includes(lead.status)) return false;
       if (filters.storeTypes.length > 0 && (!lead.store_type || !filters.storeTypes.includes(lead.store_type as StoreType))) return false;
       if (filters.associateId && lead.sales_associate_id !== filters.associateId) return false;
+      if (filters.neighborhood && lead.neighborhood !== filters.neighborhood) return false;
       if (filters.search) {
         const q = filters.search.toLowerCase();
         if (
@@ -94,6 +101,28 @@ export default function DashboardClient({ currentUser }: Props) {
   const handleLeadAdded = (lead: Lead) => {
     setLeads((prev) => [...prev, lead].sort((a, b) => a.store_name.localeCompare(b.store_name)));
     setShowAddModal(false);
+  };
+
+  const handleLocate = (lead: Lead) => {
+    setSelectedLead(lead);
+    if (lead.lat !== null && lead.lng !== null) {
+      setFlyToTarget({ lat: lead.lat, lng: lead.lng, ts: Date.now() });
+    }
+  };
+
+  const handleAssignChain = async (lead: Lead, chainGroup: string | null) => {
+    const { data, error } = await supabase
+      .from('leads')
+      .update({ chain_group: chainGroup })
+      .eq('id', lead.id)
+      .select('*, profiles!sales_associate_id(id, name, role)')
+      .single();
+
+    if (!error && data) {
+      setLeads((prev) => prev.map((l) => (l.id === data.id ? (data as Lead) : l)));
+    } else if (error) {
+      console.error('Failed to update chain group:', error.message);
+    }
   };
 
   const handleLogout = async () => {
@@ -190,32 +219,43 @@ export default function DashboardClient({ currentUser }: Props) {
   return (
     <div className="h-full flex flex-col">
       {/* Navbar */}
-      <nav className="h-12 bg-white border-b border-gray-100 flex items-center px-4 gap-4 shrink-0 z-20">
-        <span className="font-bold text-teal-700 text-sm tracking-tight">Posana Sales</span>
+      <nav className="h-12 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 flex items-center px-4 gap-4 shrink-0 z-20">
+        <span className="font-extrabold text-teal-700 dark:text-teal-400 text-sm tracking-[-0.02em]">Posana Sales</span>
 
         {/* Status summary pills */}
-        <div className="hidden md:flex items-center gap-2 flex-1">
+        <div className="hidden md:flex items-center gap-2 flex-1 overflow-x-auto">
           {(Object.entries(statusCounts) as [Status, number][]).map(([s, count]) => (
             <span
               key={s}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap shrink-0"
               style={{ background: STATUS_COLORS[s] }}
             >
-              {count} {STATUS_LABELS[s].split(' ')[0]}
+              {count} {STATUS_LABELS[s]}
             </span>
           ))}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setShowStoreList((v) => !v)}
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              showStoreList
+                ? 'bg-teal-600 text-white'
+                : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Stores
+          </button>
           <button
             onClick={exportCSV}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
           >
             CSV
           </button>
           <button
             onClick={exportKML}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
           >
             KML
           </button>
@@ -225,16 +265,16 @@ export default function DashboardClient({ currentUser }: Props) {
               className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                 showAdmin
                   ? 'bg-teal-600 text-white'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
               }`}
             >
               Admin
             </button>
           )}
-          <span className="text-xs text-gray-500 hidden sm:block">{currentUser.name}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{currentUser.name}</span>
           <button
             onClick={handleLogout}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
           >
             Sign out
           </button>
@@ -252,10 +292,22 @@ export default function DashboardClient({ currentUser }: Props) {
           onChange={setFilters}
         />
 
+        {/* Store list */}
+        {!loading && showStoreList && (
+          <StoreList
+            leads={filteredLeads}
+            selectedLeadId={selectedLead?.id}
+            currentUser={currentUser}
+            onLeadSelect={setSelectedLead}
+            onLocate={handleLocate}
+            onAssignChain={handleAssignChain}
+          />
+        )}
+
         {/* Map area */}
         <div className="flex-1 relative">
           {loading ? (
-            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
               Loading leads...
             </div>
           ) : (
@@ -264,6 +316,7 @@ export default function DashboardClient({ currentUser }: Props) {
               selectedLeadId={selectedLead?.id}
               city={filters.city}
               onLeadSelect={setSelectedLead}
+              flyToTarget={flyToTarget}
             />
           )}
 
@@ -343,21 +396,21 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
   };
 
   return (
-    <aside className="w-72 bg-white border-l border-gray-100 flex flex-col overflow-y-auto shrink-0">
-      <div className="p-4 border-b border-gray-100">
-        <h3 className="font-semibold text-gray-900 text-sm">Admin Panel</h3>
-        <p className="text-xs text-gray-500 mt-0.5">{profiles.length} team members</p>
+    <aside className="w-72 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-700 flex flex-col overflow-y-auto shrink-0">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Admin Panel</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{profiles.length} team members</p>
       </div>
 
       {/* Team list */}
-      <div className="p-4 border-b border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Team</p>
+      <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Team</p>
         <div className="space-y-2">
           {profiles.map((p) => (
             <div key={p.id} className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-800">{p.name}</p>
-                <p className="text-xs text-gray-400 capitalize">{p.role}</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">{p.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{p.role}</p>
               </div>
             </div>
           ))}
@@ -366,9 +419,9 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
 
       {/* Invite */}
       <div className="p-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Add Team Member</p>
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Add Team Member</p>
         {msg && (
-          <p className={`text-xs mb-3 p-2 rounded ${msg.startsWith('Error') ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700'}`}>
+          <p className={`text-xs mb-3 p-2 rounded ${msg.startsWith('Error') ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400' : 'bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-400'}`}>
             {msg}
           </p>
         )}
@@ -378,7 +431,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
             placeholder="Full name"
             value={inviteName}
             onChange={(e) => setInviteName(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <input
             required
@@ -386,7 +439,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
             placeholder="Email address"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <input
             required
@@ -395,7 +448,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
             value={invitePassword}
             onChange={(e) => setInvitePassword(e.target.value)}
             minLength={6}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <button
             type="submit"

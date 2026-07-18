@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.leads (
   contact_phone      TEXT,
   contact_email      TEXT,
   neighborhood       TEXT,
+  chain_group        TEXT,
   notes              TEXT,
   last_contacted_date DATE,
   city               TEXT DEFAULT 'nyc' CHECK (city IN ('nyc', 'sf')),
@@ -99,3 +100,4 @@ CREATE INDEX IF NOT EXISTS leads_status_idx           ON public.leads(status);
 CREATE INDEX IF NOT EXISTS leads_associate_idx        ON public.leads(sales_associate_id);
 CREATE INDEX IF NOT EXISTS leads_city_idx             ON public.leads(city);
 CREATE INDEX IF NOT EXISTS leads_store_type_idx       ON public.leads(store_type);
+CREATE INDEX IF NOT EXISTS leads_chain_group_idx      ON public.leads(chain_group);

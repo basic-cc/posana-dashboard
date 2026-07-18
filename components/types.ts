@@ -24,6 +24,7 @@ export interface Lead {
   contact_phone: string | null;
   contact_email: string | null;
   neighborhood: string | null;
+  chain_group: string | null;
   notes: string | null;
   last_contacted_date: string | null;
   city: City;
@@ -62,5 +63,6 @@ export interface Filters {
   statuses: Status[];
   storeTypes: StoreType[];
   associateId: string;
+  neighborhood: string;
   search: string;
 }

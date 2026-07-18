@@ -99,31 +99,31 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Add New Lead</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Add New Lead</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Store Name *</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Store Name *</label>
               <input
                 required
                 value={form.store_name}
                 onChange={(e) => set({ store_name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 placeholder="e.g. Blue Bottle Coffee"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">City</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">City</label>
               <select
                 value={form.city}
                 onChange={(e) => set({ city: e.target.value as City })}
-                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="nyc">NYC</option>
                 <option value="sf">SF</option>
@@ -131,46 +131,46 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Neighborhood</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Neighborhood</label>
               <input
                 value={form.neighborhood}
                 onChange={(e) => set({ neighborhood: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 placeholder="e.g. Tribeca"
               />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Address</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
               <div className="flex gap-2">
                 <input
                   value={form.address}
                   onChange={(e) => { set({ address: e.target.value }); setGeocoded(null); }}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder="123 Main St, New York, NY"
                 />
                 <button
                   type="button"
                   onClick={handleGeocode}
                   disabled={geocoding || !form.address}
-                  className="px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 rounded-lg text-xs font-medium text-gray-700 transition-colors whitespace-nowrap"
+                  className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 transition-colors whitespace-nowrap"
                 >
                   {geocoding ? '...' : geocoded ? 'Pinned ✓' : 'Pin'}
                 </button>
               </div>
               {geocoded && (
-                <p className="text-xs text-teal-600 mt-1">
+                <p className="text-xs text-teal-600 dark:text-teal-400 mt-1">
                   Located: {geocoded[0].toFixed(4)}, {geocoded[1].toFixed(4)}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Store Type</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Store Type</label>
               <select
                 value={form.store_type}
                 onChange={(e) => set({ store_type: e.target.value as StoreType | '' })}
-                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">Select type</option>
                 {ALL_STORE_TYPES.map((t) => (
@@ -180,11 +180,11 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Local / Corporate</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Local / Corporate</label>
               <select
                 value={form.chain_type}
                 onChange={(e) => set({ chain_type: e.target.value as ChainType | '' })}
-                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 <option value="">Select</option>
                 <option value="local">Local / Independent</option>
@@ -193,11 +193,11 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={form.status}
                 onChange={(e) => set({ status: e.target.value as Status })}
-                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {ALL_STATUSES.map((s) => (
                   <option key={s} value={s}>{STATUS_LABELS[s]}</option>
@@ -206,11 +206,11 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Assigned To</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned To</label>
               <select
                 value={form.sales_associate_id}
                 onChange={(e) => set({ sales_associate_id: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -219,56 +219,56 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Contact Name</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Name</label>
               <input
                 value={form.contact_name}
                 onChange={(e) => set({ contact_name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Contact Phone</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Phone</label>
               <input
                 value={form.contact_phone}
                 onChange={(e) => set({ contact_phone: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Contact Email</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Email</label>
               <input
                 type="email"
                 value={form.contact_email}
                 onChange={(e) => set({ contact_email: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Last Contacted</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Last Contacted</label>
               <input
                 type="date"
                 value={form.last_contacted_date}
                 onChange={(e) => set({ last_contacted_date: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
               <textarea
                 value={form.notes}
                 onChange={(e) => set({ notes: e.target.value })}
                 rows={3}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
               />
             </div>
           </div>
         </form>
 
-        <div className="p-5 border-t border-gray-100 flex gap-3">
+        <div className="p-5 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button
             type="submit"
             form=""
@@ -280,7 +280,7 @@ export default function AddLeadModal({ profiles, currentUser, onAdd, onClose }: 
           </button>
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg text-sm transition-colors"
+            className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium py-2 rounded-lg text-sm transition-colors"
           >
             Cancel
           </button>
