@@ -372,6 +372,38 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
   const [inviteName2, setInviteName2] = useState(inviteName);
   const [invitePassword2, setInvitePassword2] = useState(invitePassword);
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState<Profile['role']>('associate');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editMsg, setEditMsg] = useState('');
+
+  const startEdit = (p: Profile) => {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditRole(p.role);
+    setEditMsg('');
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async (id: string) => {
+    setSavingEdit(true);
+    setEditMsg('');
+    const { error } = await supabase
+      .from('profiles')
+      .update({ name: editName, role: editRole })
+      .eq('id', id);
+
+    setSavingEdit(false);
+    if (error) {
+      setEditMsg('Error: ' + error.message);
+    } else {
+      setEditingId(null);
+      onRefresh();
+    }
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviting(true);
@@ -405,15 +437,60 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
       {/* Team list */}
       <div className="p-4 border-b border-gray-100 dark:border-gray-700">
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Team</p>
+        {editMsg && (
+          <p className="text-xs mb-2 p-2 rounded bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
+            {editMsg}
+          </p>
+        )}
         <div className="space-y-2">
-          {profiles.map((p) => (
-            <div key={p.id} className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-800 dark:text-gray-200">{p.name}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{p.role}</p>
+          {profiles.map((p) =>
+            editingId === p.id ? (
+              <div key={p.id} className="p-2 rounded-lg border border-teal-200 dark:border-gray-600 space-y-2">
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Name"
+                />
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as Profile['role'])}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="associate">Associate</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => saveEdit(p.id)}
+                    disabled={savingEdit || !editName}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-medium py-1.5 rounded-lg transition-colors"
+                  >
+                    {savingEdit ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium py-1.5 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ) : (
+              <div key={p.id} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">{p.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{p.role}</p>
+                </div>
+                <button
+                  onClick={() => startEdit(p)}
+                  className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                >
+                  Edit
+                </button>
+              </div>
+            )
+          )}
         </div>
       </div>
 
