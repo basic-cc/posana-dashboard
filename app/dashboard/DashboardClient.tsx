@@ -384,9 +384,23 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
   const [inviteName2, setInviteName2] = useState(inviteName);
   const [invitePassword2, setInvitePassword2] = useState(invitePassword);
 
+  const [emails, setEmails] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch('/api/admin/members')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.emails) {
+          setEmails(Object.fromEntries(data.emails.map((e: { id: string; email: string }) => [e.id, e.email])));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState<Profile['role']>('associate');
+  const [editEmail, setEditEmail] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [editMsg, setEditMsg] = useState('');
 
@@ -394,6 +408,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
     setEditingId(p.id);
     setEditName(p.name);
     setEditRole(p.role);
+    setEditEmail(emails[p.id] ?? '');
     setEditMsg('');
   };
 
@@ -402,18 +417,36 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
   const saveEdit = async (id: string) => {
     setSavingEdit(true);
     setEditMsg('');
+
     const { error } = await supabase
       .from('profiles')
       .update({ name: editName, role: editRole })
       .eq('id', id);
 
-    setSavingEdit(false);
     if (error) {
+      setSavingEdit(false);
       setEditMsg('Error: ' + error.message);
-    } else {
-      setEditingId(null);
-      onRefresh();
+      return;
     }
+
+    if (editEmail !== emails[id]) {
+      const res = await fetch('/api/admin/members', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, email: editEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSavingEdit(false);
+        setEditMsg('Error: ' + data.error);
+        return;
+      }
+      setEmails((prev) => ({ ...prev, [id]: data.email }));
+    }
+
+    setSavingEdit(false);
+    setEditingId(null);
+    onRefresh();
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -464,6 +497,13 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder="Name"
                 />
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Email"
+                />
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value as Profile['role'])}
@@ -492,6 +532,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
               <div key={p.id} className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-800 dark:text-gray-200">{p.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{emails[p.id] ?? '—'}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{p.role}</p>
                 </div>
                 <button
