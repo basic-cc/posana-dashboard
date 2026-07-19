@@ -28,6 +28,7 @@ body {
   font-family: var(--font-sans), -apple-system, "Segoe UI", sans-serif;
   font-feature-settings: "ss01" 1, "cv01" 1;
   letter-spacing: -0.011em;
+  font-weight: 500;
 }
 
 /* Ensure type fields always have readable text against their own background */
