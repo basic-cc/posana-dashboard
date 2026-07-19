@@ -3,12 +3,20 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import {
-  Lead, Profile, Status, StoreType, ChainType, City,
+  Lead, Profile, Status, StoreType, ChainType, City, CITY_META, cityLabel,
   STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS,
 } from './types';
 
 const ALL_STATUSES: Status[] = ['not_contacted', 'in_contact', 'samples_shipped', 'actively_selling', 'declined'];
 const ALL_STORE_TYPES: StoreType[] = ['coffee_shop', 'gym_fitness', 'smoothie_shop', 'local_deli', 'specialty_grocer', 'other'];
+
+const CITIES_BY_STATE = Object.entries(CITY_META).reduce<Record<string, string[]>>((acc, [slug, meta]) => {
+  (acc[meta.state] ??= []).push(slug);
+  return acc;
+}, {});
+const STATE_ORDER = Object.keys(CITIES_BY_STATE).sort((a, b) =>
+  a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)
+);
 
 interface Props {
   lead: Lead;
@@ -19,36 +27,36 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
+function fieldsFromLead(lead: Lead): Partial<Lead> {
+  return {
+    store_name: lead.store_name,
+    status: lead.status,
+    store_type: lead.store_type,
+    chain_type: lead.chain_type,
+    contact_name: lead.contact_name,
+    contact_phone: lead.contact_phone,
+    contact_email: lead.contact_email,
+    neighborhood: lead.neighborhood,
+    notes: lead.notes,
+    last_contacted_date: lead.last_contacted_date,
+    sales_associate_id: lead.sales_associate_id,
+    city: lead.city,
+  };
+}
+
 export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpdate, onDelete }: Props) {
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<Partial<Lead>>({});
   const supabase = createClient();
 
   const canEdit = currentUser.role === 'admin' || lead.sales_associate_id === currentUser.id;
 
-  const startEdit = () => {
-    setForm({
-      store_name: lead.store_name,
-      status: lead.status,
-      store_type: lead.store_type,
-      chain_type: lead.chain_type,
-      contact_name: lead.contact_name,
-      contact_phone: lead.contact_phone,
-      contact_email: lead.contact_email,
-      neighborhood: lead.neighborhood,
-      notes: lead.notes,
-      last_contacted_date: lead.last_contacted_date,
-      sales_associate_id: lead.sales_associate_id,
-      city: lead.city,
-    });
-    setEditing(true);
-  };
+  // The parent keys this component by lead.id, so selecting a different lead remounts it —
+  // fields start out editable immediately (if the user has permission), no separate "Edit" click.
+  const [form, setForm] = useState<Partial<Lead>>(() => (canEdit ? fieldsFromLead(lead) : {}));
 
-  const cancelEdit = () => {
-    setEditing(false);
-    setForm({});
-  };
+  const resetForm = () => setForm(fieldsFromLead(lead));
+
+  const isDirty = canEdit && (Object.keys(form) as (keyof Lead)[]).some((key) => lead[key] !== form[key]);
 
   const save = async () => {
     setSaving(true);
@@ -62,8 +70,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
     setSaving(false);
     if (!error && data) {
       onUpdate(data as Lead);
-      setEditing(false);
-      setForm({});
+      setForm(fieldsFromLead(data as Lead));
     }
   };
 
@@ -73,15 +80,12 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
     onDelete(lead.id);
   };
 
-  const f = <T,>(key: keyof Lead, fallback: T) =>
-    editing ? (form[key] ?? lead[key] ?? fallback) : (lead[key] ?? fallback);
-
   return (
     <div className="absolute top-0 right-0 h-full w-80 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-700 shadow-xl z-10 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-start justify-between p-4 border-b border-gray-100 dark:border-gray-700">
         <div className="flex-1 min-w-0 pr-2">
-          {editing ? (
+          {canEdit ? (
             <input
               value={(form.store_name ?? lead.store_name) as string}
               onChange={(e) => setForm((p) => ({ ...p, store_name: e.target.value }))}
@@ -106,7 +110,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         {/* Status */}
         <div>
           <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</label>
-          {editing ? (
+          {canEdit ? (
             <select
               value={(form.status ?? lead.status) as string}
               onChange={(e) => setForm((p) => ({ ...p, status: e.target.value as Status }))}
@@ -131,7 +135,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         {/* Associate */}
         <div>
           <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Associate</label>
-          {editing && currentUser.role === 'admin' ? (
+          {canEdit && currentUser.role === 'admin' ? (
             <select
               value={(form.sales_associate_id ?? lead.sales_associate_id ?? '') as string}
               onChange={(e) => setForm((p) => ({ ...p, sales_associate_id: e.target.value || null }))}
@@ -151,7 +155,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</label>
-            {editing ? (
+            {canEdit ? (
               <select
                 value={(form.store_type ?? lead.store_type ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, store_type: (e.target.value || null) as StoreType | null }))}
@@ -168,7 +172,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Chain</label>
-            {editing ? (
+            {canEdit ? (
               <select
                 value={(form.chain_type ?? lead.chain_type ?? '') as string}
                 onChange={(e) => setForm((p) => ({ ...p, chain_type: (e.target.value || null) as ChainType | null }))}
@@ -187,7 +191,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         </div>
 
         {/* City */}
-        {editing && (
+        {canEdit && (
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">City</label>
             <select
@@ -195,8 +199,13 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               onChange={(e) => setForm((p) => ({ ...p, city: e.target.value as City }))}
               className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              <option value="nyc">NYC</option>
-              <option value="sf">SF</option>
+              {STATE_ORDER.map((state) => (
+                <optgroup key={state} label={state}>
+                  {CITIES_BY_STATE[state].map((slug) => (
+                    <option key={slug} value={slug}>{cityLabel(slug)}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
         )}
@@ -212,7 +221,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         {/* Contact */}
         <div>
           <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Point of Contact</label>
-          {editing ? (
+          {canEdit ? (
             <div className="mt-1 space-y-1.5">
               <input
                 placeholder="Name"
@@ -252,7 +261,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         {/* Last Contacted */}
         <div>
           <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Contacted</label>
-          {editing ? (
+          {canEdit ? (
             <input
               type="date"
               value={(form.last_contacted_date ?? lead.last_contacted_date ?? '') as string}
@@ -271,7 +280,7 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
         {/* Notes */}
         <div>
           <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notes</label>
-          {editing ? (
+          {canEdit ? (
             <textarea
               value={(form.notes ?? lead.notes ?? '') as string}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value || null }))}
@@ -288,41 +297,31 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
 
       {/* Footer actions */}
       <div className="p-4 border-t border-gray-100 dark:border-gray-700 flex gap-2">
-        {editing ? (
+        {canEdit && (
           <>
             <button
               onClick={save}
-              disabled={saving}
+              disabled={saving || !isDirty}
               className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
             <button
-              onClick={cancelEdit}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium py-2 rounded-lg transition-colors"
+              onClick={resetForm}
+              disabled={!isDirty}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-200 text-xs font-medium py-2 rounded-lg transition-colors"
             >
-              Cancel
+              Reset
             </button>
           </>
-        ) : (
-          <>
-            {canEdit && (
-              <button
-                onClick={startEdit}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium py-2 rounded-lg transition-colors"
-              >
-                Edit
-              </button>
-            )}
-            {currentUser.role === 'admin' && (
-              <button
-                onClick={handleDelete}
-                className="flex-1 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900 text-red-600 dark:text-red-400 text-xs font-medium py-2 rounded-lg transition-colors"
-              >
-                Delete
-              </button>
-            )}
-          </>
+        )}
+        {currentUser.role === 'admin' && (
+          <button
+            onClick={handleDelete}
+            className="flex-1 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900 text-red-600 dark:text-red-400 text-xs font-medium py-2 rounded-lg transition-colors"
+          >
+            Delete
+          </button>
         )}
       </div>
     </div>

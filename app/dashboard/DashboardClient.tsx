@@ -331,6 +331,7 @@ export default function DashboardClient({ currentUser }: Props) {
           {/* Lead panel */}
           {selectedLead && (
             <LeadPanel
+              key={selectedLead.id}
               lead={selectedLead}
               profiles={profiles}
               currentUser={currentUser}
