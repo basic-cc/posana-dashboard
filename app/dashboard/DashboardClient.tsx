@@ -468,17 +468,33 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
   const [invitePassword2, setInvitePassword2] = useState(invitePassword);
 
   const [emails, setEmails] = useState<Record<string, string>>({});
+  const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadMembers = () => {
     fetch('/api/admin/members')
       .then((r) => r.json())
       .then((data) => {
         if (data.emails) {
           setEmails(Object.fromEntries(data.emails.map((e: { id: string; email: string }) => [e.id, e.email])));
+          setConfirmed(Object.fromEntries(data.emails.map((e: { id: string; confirmed: boolean }) => [e.id, e.confirmed])));
         }
       })
       .catch(() => {});
-  }, []);
+  };
+
+  useEffect(loadMembers, []);
+
+  const confirmEmail = async (id: string) => {
+    setConfirmingId(id);
+    const res = await fetch('/api/admin/members', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, confirm: true }),
+    });
+    if (res.ok) setConfirmed((prev) => ({ ...prev, [id]: true }));
+    setConfirmingId(null);
+  };
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -525,6 +541,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
         return;
       }
       setEmails((prev) => ({ ...prev, [id]: data.email }));
+      setConfirmed((prev) => ({ ...prev, [id]: true }));
     }
 
     setSavingEdit(false);
@@ -613,7 +630,7 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
                 </div>
               </div>
             ) : (
-              <div key={p.id} className="flex items-center justify-between">
+              <div key={p.id} className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-gray-800 dark:text-gray-200">{p.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{emails[p.id] ?? '—'}</p>
@@ -630,13 +647,29 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
                       ))}
                     </div>
                   )}
+                  {p.id in confirmed && !confirmed[p.id] && (
+                    <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
+                      Email not confirmed — can&apos;t log in yet
+                    </p>
+                  )}
                 </div>
-                <button
-                  onClick={() => startEdit(p)}
-                  className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
-                >
-                  Edit
-                </button>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <button
+                    onClick={() => startEdit(p)}
+                    className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                  >
+                    Edit
+                  </button>
+                  {p.id in confirmed && !confirmed[p.id] && (
+                    <button
+                      onClick={() => confirmEmail(p.id)}
+                      disabled={confirmingId === p.id}
+                      className="text-xs text-amber-600 dark:text-amber-500 hover:underline disabled:opacity-50"
+                    >
+                      {confirmingId === p.id ? 'Confirming...' : 'Confirm email'}
+                    </button>
+                  )}
+                </div>
               </div>
             )
           )}
