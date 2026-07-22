@@ -50,7 +50,7 @@ interface ParsedRow {
 function buildImportPrompt(): string {
   const cityList = Object.values(CITY_META)
     .filter((m) => m.lat !== null)
-    .map((m) => `${m.label} (${m.state})`)
+    .map((m) => m.label)
     .join(', ');
 
   return `You are converting raw, messy store/lead data into a strict CSV format for import into the Posana Sales CRM.
@@ -63,7 +63,7 @@ ${COLUMNS.join(',')}
 Column rules:
 - store_name: required, the business name.
 - address: full street address if available.
-- city: pick the closest match from this known list, or write the plain city name if it's not on the list: ${cityList}.
+- city: known cities are: ${cityList}. If the store is in one of these, output that name EXACTLY as spelled here — same capitalization, no state abbreviation, no extra punctuation (e.g. write "NYC", never "NYC (NY)" or "NYC, NY" or "New York City"). Only write a different city name if the store genuinely isn't in any of these.
 - neighborhood: neighborhood/area name if known, else blank.
 - store_type: one of exactly: ${ALL_STORE_TYPES.join(', ')} (leave blank if unclear).
 - chain_type: one of exactly: ${ALL_CHAIN_TYPES.join(', ')} (leave blank if unclear).
@@ -127,14 +127,33 @@ function parseCSV(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim() !== ''));
 }
 
+const KNOWN_STATE_CODES = Array.from(
+  new Set(Object.values(CITY_META).map((m) => m.state).filter((s) => /^[A-Z]{2}$/.test(s)))
+);
+// Matches a trailing state qualifier like " (NY)", ", NY", or "-NY" so
+// "NYC (NY)" / "NYC, NY" / "NYC-NY" all resolve the same as plain "NYC"
+// instead of being slugified into a brand new, duplicate city.
+const TRAILING_STATE_RE = new RegExp(`[\\s,(-]+(${KNOWN_STATE_CODES.join('|')})\\)?$`, 'i');
+
+function matchCitySlug(value: string): string | null {
+  const lower = value.trim().toLowerCase();
+  if (!lower) return null;
+  if (CITY_META[lower]) return lower;
+  const match = Object.entries(CITY_META).find(([, meta]) => meta.label.toLowerCase() === lower);
+  return match ? match[0] : null;
+}
+
 function resolveCitySlug(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return 'unknown';
-  const lower = trimmed.toLowerCase();
-  if (CITY_META[lower]) return lower;
-  const match = Object.entries(CITY_META).find(([, meta]) => meta.label.toLowerCase() === lower);
-  if (match) return match[0];
-  return lower.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unknown';
+
+  const direct = matchCitySlug(trimmed);
+  if (direct) return direct;
+
+  const withoutState = matchCitySlug(trimmed.replace(TRAILING_STATE_RE, ''));
+  if (withoutState) return withoutState;
+
+  return trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'unknown';
 }
 
 function parseRows(text: string): ParsedRow[] {
