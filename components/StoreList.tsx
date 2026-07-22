@@ -10,6 +10,7 @@ interface Props {
   onLeadSelect: (lead: Lead) => void;
   onLocate: (lead: Lead) => void;
   onAssignChain: (lead: Lead, chainGroup: string | null) => void;
+  onClaim: (lead: Lead) => void;
 }
 
 interface ChainGroup {
@@ -23,7 +24,7 @@ function groupKey(lead: Lead): string {
   return lead.chain_group?.trim() || lead.store_name;
 }
 
-export default function StoreList({ leads, selectedLeadId, currentUser, onLeadSelect, onLocate, onAssignChain }: Props) {
+export default function StoreList({ leads, selectedLeadId, currentUser, onLeadSelect, onLocate, onAssignChain, onClaim }: Props) {
   const [groupChains, setGroupChains] = useState(true);
   const [expandedChains, setExpandedChains] = useState<Set<string>>(new Set());
 
@@ -98,6 +99,7 @@ export default function StoreList({ leads, selectedLeadId, currentUser, onLeadSe
               onSelect={onLeadSelect}
               onLocate={onLocate}
               onAssignChain={onAssignChain}
+              onClaim={onClaim}
             />
           ) : (
             <div key={item.group.name}>
@@ -118,6 +120,7 @@ export default function StoreList({ leads, selectedLeadId, currentUser, onLeadSe
                       onSelect={onLeadSelect}
                       onLocate={onLocate}
                       onAssignChain={onAssignChain}
+                      onClaim={onClaim}
                       displayName={lead.store_name !== item.group.name ? lead.store_name : (lead.address ?? lead.store_name)}
                       indent
                     />
@@ -186,6 +189,7 @@ function StoreRow({
   onSelect,
   onLocate,
   onAssignChain,
+  onClaim,
   displayName,
   indent,
 }: {
@@ -196,6 +200,7 @@ function StoreRow({
   onSelect: (lead: Lead) => void;
   onLocate: (lead: Lead) => void;
   onAssignChain: (lead: Lead, chainGroup: string | null) => void;
+  onClaim: (lead: Lead) => void;
   displayName?: string;
   indent?: boolean;
 }) {
@@ -241,6 +246,7 @@ function StoreRow({
           {lead.profiles?.name && (
             <span className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
               · {lead.profiles.name}
+              {lead.profiles.labels && lead.profiles.labels.length > 0 && ` (${lead.profiles.labels.join(', ')})`}
             </span>
           )}
           {lead.chain_group && (
@@ -249,6 +255,19 @@ function StoreRow({
             </span>
           )}
         </div>
+
+        {lead.sales_associate_id === null && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClaim(lead);
+            }}
+            className="mt-1.5 text-[11px] px-2 py-1 rounded-md bg-teal-50 hover:bg-teal-100 dark:bg-teal-900/40 dark:hover:bg-teal-900/60 text-teal-700 dark:text-teal-400 font-medium transition-colors"
+          >
+            Claim
+          </button>
+        )}
 
         {assigning && canEdit && (
           <ChainAssignForm

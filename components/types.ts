@@ -44,7 +44,11 @@ export interface Profile {
   id: string;
   name: string;
   role: Role;
+  labels: string[];
 }
+
+// Sentinel value for Filters.associateId meaning "unassigned leads only"
+export const UNCLAIMED = '__unclaimed__';
 
 export interface Lead {
   id: string;
@@ -101,4 +105,5 @@ export interface Filters {
   associateId: string;
   neighborhood: string;
   search: string;
+  label: string;
 }

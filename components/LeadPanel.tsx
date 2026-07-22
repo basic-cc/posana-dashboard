@@ -25,6 +25,7 @@ interface Props {
   onClose: () => void;
   onUpdate: (updated: Lead) => void;
   onDelete: (id: string) => void;
+  onClaim: (lead: Lead) => void;
 }
 
 function fieldsFromLead(lead: Lead): Partial<Lead> {
@@ -44,7 +45,7 @@ function fieldsFromLead(lead: Lead): Partial<Lead> {
   };
 }
 
-export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpdate, onDelete }: Props) {
+export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpdate, onDelete, onClaim }: Props) {
   const [saving, setSaving] = useState(false);
   const supabase = createClient();
 
@@ -147,7 +148,30 @@ export default function LeadPanel({ lead, profiles, currentUser, onClose, onUpda
               ))}
             </select>
           ) : (
-            <p className="mt-1 text-gray-700 dark:text-gray-300">{lead.profiles?.name ?? 'Unassigned'}</p>
+            <div className="mt-1">
+              <p className="text-gray-700 dark:text-gray-300">{lead.profiles?.name ?? 'Unassigned'}</p>
+              {lead.profiles?.labels && lead.profiles.labels.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {lead.profiles.labels.map((l) => (
+                    <span
+                      key={l}
+                      className="px-1.5 py-0.5 rounded-full text-[10px] bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-400"
+                    >
+                      {l}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {lead.sales_associate_id === null && (
+                <button
+                  type="button"
+                  onClick={() => onClaim(lead)}
+                  className="mt-2 text-xs px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium transition-colors"
+                >
+                  Claim this store
+                </button>
+              )}
+            </div>
           )}
         </div>
 

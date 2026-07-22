@@ -33,6 +33,35 @@ export async function GET() {
   return NextResponse.json({ emails });
 }
 
+export async function POST(request: NextRequest) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  const { email, password, name } = await request.json();
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
+  }
+  if (!password || typeof password !== "string" || password.length < 6) {
+    return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+  }
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  // email_confirm: true skips Supabase's confirmation-email flow entirely, so
+  // admin-added associates can sign in immediately instead of hitting "email not confirmed".
+  const { data, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name },
+  });
+  if (createError) return NextResponse.json({ error: createError.message }, { status: 400 });
+
+  return NextResponse.json({ id: data.user.id, email: data.user.email });
+}
+
 export async function PATCH(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;

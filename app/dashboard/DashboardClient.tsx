@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import {
   Lead, Profile, Filters, Status, StoreType,
-  STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS, cityLabel,
+  STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS, cityLabel, UNCLAIMED,
 } from '@/components/types';
 import FilterBar from '@/components/FilterBar';
 import LeadPanel from '@/components/LeadPanel';
 import AddLeadModal from '@/components/AddLeadModal';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import LabelsEditor from '@/components/LabelsEditor';
+import ImportModal from '@/components/ImportModal';
 import StoreList from '@/components/StoreList';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { FlyToTarget } from '@/components/MapView';
@@ -30,10 +32,11 @@ function escapeXml(str: string) {
     .replace(/"/g, '&quot;');
 }
 
-export default function DashboardClient({ currentUser }: Props) {
+export default function DashboardClient({ currentUser: initialCurrentUser }: Props) {
   const router = useRouter();
   const supabase = createClient();
 
+  const [currentUser, setCurrentUser] = useState<Profile>(initialCurrentUser);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,8 @@ export default function DashboardClient({ currentUser }: Props) {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showStoreList, setShowStoreList] = useState(true);
+  const [showLabels, setShowLabels] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [flyToTarget, setFlyToTarget] = useState<FlyToTarget | null>(null);
   const [filters, setFilters] = useState<Filters>({
     city: 'all',
@@ -50,6 +55,7 @@ export default function DashboardClient({ currentUser }: Props) {
     associateId: '',
     neighborhood: '',
     search: '',
+    label: '',
   });
 
   useEffect(() => {
@@ -61,7 +67,7 @@ export default function DashboardClient({ currentUser }: Props) {
     const [leadsRes, profilesRes] = await Promise.all([
       supabase
         .from('leads')
-        .select('*, profiles!sales_associate_id(id, name, role)')
+        .select('*, profiles!sales_associate_id(id, name, role, labels)')
         .order('store_name'),
       supabase.from('profiles').select('*').order('name'),
     ]);
@@ -70,12 +76,19 @@ export default function DashboardClient({ currentUser }: Props) {
     setLoading(false);
   };
 
+  const unclaimedCount = useMemo(() => leads.filter((l) => l.sales_associate_id === null).length, [leads]);
+
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
       if (filters.city !== 'all' && lead.city !== filters.city) return false;
       if (filters.statuses.length > 0 && !filters.statuses.includes(lead.status)) return false;
       if (filters.storeTypes.length > 0 && (!lead.store_type || !filters.storeTypes.includes(lead.store_type as StoreType))) return false;
-      if (filters.associateId && lead.sales_associate_id !== filters.associateId) return false;
+      if (filters.associateId === UNCLAIMED) {
+        if (lead.sales_associate_id !== null) return false;
+      } else if (filters.associateId && lead.sales_associate_id !== filters.associateId) {
+        return false;
+      }
+      if (filters.label && !lead.profiles?.labels?.includes(filters.label)) return false;
       if (filters.neighborhood && lead.neighborhood !== filters.neighborhood) return false;
       if (filters.search) {
         const q = filters.search.toLowerCase();
@@ -117,7 +130,7 @@ export default function DashboardClient({ currentUser }: Props) {
       .from('leads')
       .update({ chain_group: chainGroup })
       .eq('id', lead.id)
-      .select('*, profiles!sales_associate_id(id, name, role)')
+      .select('*, profiles!sales_associate_id(id, name, role, labels)')
       .single();
 
     if (!error && data) {
@@ -125,6 +138,34 @@ export default function DashboardClient({ currentUser }: Props) {
     } else if (error) {
       console.error('Failed to update chain group:', error.message);
     }
+  };
+
+  const handleClaim = async (lead: Lead) => {
+    // .is('sales_associate_id', null) plus the RLS claim policy means a race between two
+    // associates clicking Claim at once resolves to "first write wins, second gets 0 rows".
+    const { data, error } = await supabase
+      .from('leads')
+      .update({ sales_associate_id: currentUser.id })
+      .eq('id', lead.id)
+      .is('sales_associate_id', null)
+      .select('*, profiles!sales_associate_id(id, name, role, labels)')
+      .single();
+
+    if (!error && data) {
+      setLeads((prev) => prev.map((l) => (l.id === data.id ? (data as Lead) : l)));
+      if (selectedLead?.id === data.id) setSelectedLead(data as Lead);
+    } else if (error) {
+      console.error('Failed to claim lead:', error.message);
+    }
+  };
+
+  const handleLabelsSaved = (labels: string[]) => {
+    setCurrentUser((prev) => ({ ...prev, labels }));
+    setProfiles((prev) => prev.map((p) => (p.id === currentUser.id ? { ...p, labels } : p)));
+  };
+
+  const handleImported = (newLeads: Lead[]) => {
+    setLeads((prev) => [...prev, ...newLeads].sort((a, b) => a.store_name.localeCompare(b.store_name)));
   };
 
   const handleLogout = async () => {
@@ -250,6 +291,22 @@ export default function DashboardClient({ currentUser }: Props) {
             Stores
           </button>
           <button
+            onClick={() => setFilters((f) => ({ ...f, associateId: f.associateId === UNCLAIMED ? '' : UNCLAIMED }))}
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              filters.associateId === UNCLAIMED
+                ? 'bg-teal-600 text-white'
+                : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Unclaimed ({unclaimedCount})
+          </button>
+          <button
+            onClick={() => setShowImport(true)}
+            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
+          >
+            Import
+          </button>
+          <button
             onClick={exportCSV}
             className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
           >
@@ -274,6 +331,12 @@ export default function DashboardClient({ currentUser }: Props) {
             </button>
           )}
           <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{currentUser.name}</span>
+          <button
+            onClick={() => setShowLabels(true)}
+            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
+          >
+            My Labels
+          </button>
           <button
             onClick={() => setShowChangePassword(true)}
             className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
@@ -309,6 +372,7 @@ export default function DashboardClient({ currentUser }: Props) {
             onLeadSelect={setSelectedLead}
             onLocate={handleLocate}
             onAssignChain={handleAssignChain}
+            onClaim={handleClaim}
           />
         )}
 
@@ -338,6 +402,7 @@ export default function DashboardClient({ currentUser }: Props) {
               onClose={() => setSelectedLead(null)}
               onUpdate={handleLeadUpdated}
               onDelete={handleLeadDeleted}
+              onClaim={handleClaim}
             />
           )}
 
@@ -368,6 +433,23 @@ export default function DashboardClient({ currentUser }: Props) {
 
       {showChangePassword && (
         <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
+
+      {showLabels && (
+        <LabelsEditor
+          currentUser={currentUser}
+          onSaved={handleLabelsSaved}
+          onClose={() => setShowLabels(false)}
+        />
+      )}
+
+      {showImport && (
+        <ImportModal
+          profiles={profiles}
+          currentUser={currentUser}
+          onImported={handleImported}
+          onClose={() => setShowImport(false)}
+        />
       )}
     </div>
   );
@@ -455,16 +537,17 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
     setInviting(true);
     setMsg('');
 
-    const { data, error } = await supabase.auth.signUp({
-      email: inviteEmail,
-      password: invitePassword,
-      options: { data: { name: inviteName } },
+    const res = await fetch('/api/admin/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: inviteEmail, password: invitePassword, name: inviteName }),
     });
+    const data = await res.json();
 
-    if (error) {
-      setMsg('Error: ' + error.message);
+    if (!res.ok) {
+      setMsg('Error: ' + data.error);
     } else {
-      setMsg(`Invited ${inviteEmail}. They can now log in.`);
+      setMsg(`Added ${inviteEmail}. They can log in immediately.`);
       setInviteEmail('');
       setInviteName('');
       setInvitePassword('');
@@ -535,6 +618,18 @@ function AdminPanel({ profiles, onRefresh }: { profiles: Profile[]; onRefresh: (
                   <p className="text-sm text-gray-800 dark:text-gray-200">{p.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{emails[p.id] ?? '—'}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{p.role}</p>
+                  {p.labels && p.labels.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {p.labels.map((l) => (
+                        <span
+                          key={l}
+                          className="px-1.5 py-0.5 rounded-full text-[10px] bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-400"
+                        >
+                          {l}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => startEdit(p)}

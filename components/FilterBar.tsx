@@ -1,6 +1,6 @@
 'use client';
 
-import { Lead, Profile, Filters, Status, StoreType, City, CITY_META, cityLabel, STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS } from './types';
+import { Lead, Profile, Filters, Status, StoreType, City, CITY_META, cityLabel, STATUS_LABELS, STATUS_COLORS, STORE_TYPE_LABELS, UNCLAIMED } from './types';
 
 const ALL_STATUSES: Status[] = ['not_contacted', 'in_contact', 'samples_shipped', 'actively_selling', 'declined'];
 const ALL_STORE_TYPES: StoreType[] = ['coffee_shop', 'gym_fitness', 'smoothie_shop', 'local_deli', 'specialty_grocer', 'other'];
@@ -48,7 +48,7 @@ export default function FilterBar({ filters, profiles, leads, filteredCount, onC
   };
 
   const clearAll = () =>
-    onChange({ city: 'all', statuses: [], storeTypes: [], associateId: '', neighborhood: '', search: '' });
+    onChange({ city: 'all', statuses: [], storeTypes: [], associateId: '', neighborhood: '', search: '', label: '' });
 
   const activeCount =
     (filters.city !== 'all' ? 1 : 0) +
@@ -56,7 +56,10 @@ export default function FilterBar({ filters, profiles, leads, filteredCount, onC
     filters.storeTypes.length +
     (filters.associateId ? 1 : 0) +
     (filters.neighborhood ? 1 : 0) +
-    (filters.search ? 1 : 0);
+    (filters.search ? 1 : 0) +
+    (filters.label ? 1 : 0);
+
+  const allLabels = Array.from(new Set(profiles.flatMap((p) => p.labels ?? []))).sort((a, b) => a.localeCompare(b));
 
   return (
     <aside className="w-64 bg-[#F0FDFB] dark:bg-gray-900 border-r border-teal-100 dark:border-gray-700 flex flex-col overflow-y-auto shrink-0">
@@ -129,6 +132,7 @@ export default function FilterBar({ filters, profiles, leads, filteredCount, onC
           className="w-full border border-teal-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
           <option value="">All associates</option>
+          <option value={UNCLAIMED}>Unclaimed</option>
           {profiles.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -136,6 +140,28 @@ export default function FilterBar({ filters, profiles, leads, filteredCount, onC
           ))}
         </select>
       </div>
+
+      {/* Targeting Area (labels) */}
+      {allLabels.length > 0 && (
+        <div className="p-4 border-b border-teal-100 dark:border-gray-700">
+          <p className="text-xs font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-2">Targeting Area</p>
+          <div className="flex flex-wrap gap-1">
+            {allLabels.map((l) => (
+              <button
+                key={l}
+                onClick={() => set({ label: filters.label === l ? '' : l })}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                  filters.label === l
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-gray-700 border border-teal-100 dark:border-gray-600'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Neighborhood */}
       <div className="p-4 border-b border-teal-100 dark:border-gray-700">
