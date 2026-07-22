@@ -67,7 +67,7 @@ export default function StoreList({ leads, selectedLeadId, currentUser, onLeadSe
   };
 
   return (
-    <aside className="w-80 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden shrink-0">
+    <aside className="w-80 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden shrink-0">
       <div className="p-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Stores</span>

@@ -16,7 +16,10 @@ import LabelsEditor from '@/components/LabelsEditor';
 import ImportModal from '@/components/ImportModal';
 import StoreList from '@/components/StoreList';
 import ThemeToggle from '@/components/ThemeToggle';
+import NavDropdown from '@/components/NavDropdown';
 import type { FlyToTarget } from '@/components/MapView';
+
+const MENU_ITEM = 'w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
@@ -300,24 +303,16 @@ export default function DashboardClient({ currentUser: initialCurrentUser }: Pro
           >
             Unclaimed ({unclaimedCount})
           </button>
-          <button
-            onClick={() => setShowImport(true)}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
-          >
-            Import
-          </button>
-          <button
-            onClick={exportCSV}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
-          >
-            CSV
-          </button>
-          <button
-            onClick={exportKML}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
-          >
-            KML
-          </button>
+          <NavDropdown trigger="File">
+            {(close) => (
+              <FileMenuItems
+                onImport={() => setShowImport(true)}
+                onExportCSV={exportCSV}
+                onExportKML={exportKML}
+                close={close}
+              />
+            )}
+          </NavDropdown>
           {currentUser.role === 'admin' && (
             <button
               onClick={() => setShowAdmin((v) => !v)}
@@ -330,25 +325,32 @@ export default function DashboardClient({ currentUser: initialCurrentUser }: Pro
               Admin
             </button>
           )}
-          <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{currentUser.name}</span>
-          <button
-            onClick={() => setShowLabels(true)}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
+          <NavDropdown
+            align="right"
+            trigger={
+              <span className="w-7 h-7 rounded-full bg-teal-600 text-white text-xs font-semibold flex items-center justify-center">
+                {currentUser.name.charAt(0).toUpperCase()}
+              </span>
+            }
+            triggerClassName="rounded-full hover:ring-2 hover:ring-teal-200 dark:hover:ring-teal-800 transition-all"
           >
-            My Labels
-          </button>
-          <button
-            onClick={() => setShowChangePassword(true)}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
-          >
-            Change Password
-          </button>
-          <button
-            onClick={handleLogout}
-            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors"
-          >
-            Sign out
-          </button>
+            {(close) => (
+              <>
+                <p className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 truncate border-b border-gray-100 dark:border-gray-700">
+                  {currentUser.name}
+                </p>
+                <button onClick={() => { setShowLabels(true); close(); }} className={MENU_ITEM}>
+                  My Labels
+                </button>
+                <button onClick={() => { setShowChangePassword(true); close(); }} className={MENU_ITEM}>
+                  Change Password
+                </button>
+                <button onClick={handleLogout} className={MENU_ITEM}>
+                  Sign out
+                </button>
+              </>
+            )}
+          </NavDropdown>
         </div>
       </nav>
 
@@ -362,19 +364,6 @@ export default function DashboardClient({ currentUser: initialCurrentUser }: Pro
           filteredCount={filteredLeads.length}
           onChange={setFilters}
         />
-
-        {/* Store list */}
-        {!loading && showStoreList && (
-          <StoreList
-            leads={filteredLeads}
-            selectedLeadId={selectedLead?.id}
-            currentUser={currentUser}
-            onLeadSelect={setSelectedLead}
-            onLocate={handleLocate}
-            onAssignChain={handleAssignChain}
-            onClaim={handleClaim}
-          />
-        )}
 
         {/* Map area */}
         <div className="flex-1 relative">
@@ -416,6 +405,19 @@ export default function DashboardClient({ currentUser: initialCurrentUser }: Pro
           </button>
         </div>
 
+        {/* Store list */}
+        {!loading && showStoreList && (
+          <StoreList
+            leads={filteredLeads}
+            selectedLeadId={selectedLead?.id}
+            currentUser={currentUser}
+            onLeadSelect={setSelectedLead}
+            onLocate={handleLocate}
+            onAssignChain={handleAssignChain}
+            onClaim={handleClaim}
+          />
+        )}
+
         {/* Admin panel */}
         {showAdmin && currentUser.role === 'admin' && (
           <AdminPanel profiles={profiles} onRefresh={fetchData} />
@@ -452,6 +454,45 @@ export default function DashboardClient({ currentUser: initialCurrentUser }: Pro
         />
       )}
     </div>
+  );
+}
+
+function FileMenuItems({
+  onImport,
+  onExportCSV,
+  onExportKML,
+  close,
+}: {
+  onImport: () => void;
+  onExportCSV: () => void;
+  onExportKML: () => void;
+  close: () => void;
+}) {
+  const [exportOpen, setExportOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => { onImport(); close(); }} className={MENU_ITEM}>
+        Import
+      </button>
+      <button
+        onClick={() => setExportOpen((v) => !v)}
+        className={`${MENU_ITEM} flex items-center justify-between`}
+      >
+        Export
+        <span className="text-gray-400">{exportOpen ? '▾' : '▸'}</span>
+      </button>
+      {exportOpen && (
+        <div className="border-t border-gray-100 dark:border-gray-700">
+          <button onClick={() => { onExportCSV(); close(); }} className={`${MENU_ITEM} pl-6`}>
+            CSV
+          </button>
+          <button onClick={() => { onExportKML(); close(); }} className={`${MENU_ITEM} pl-6`}>
+            KML
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
